@@ -1,0 +1,48 @@
+version: '2'
+
+services:
+  nginx-proxy:
+    container_name: nginx-proxy
+    image: jwilder/nginx-proxy
+    ports:
+      - "443:443"
+    environment:
+      - MAX_UPLOAD_SIZE=200000000M
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /etc/nginx/certs:/etc/nginx/certs
+      - /etc/nginx/nginx-overrides.conf:/etc/nginx/conf.d/nginx-overrides.conf:ro
+    restart: always
+
+  redis:
+    image: redis
+    restart: always
+
+  cron:
+    image: dheaps/nextcloud-cron
+    restart: always
+    volumes:
+      - nextcloud:/var/www/html
+      - /var/nextcloud/config:/var/www/html/config
+      - /var/nextcloud/data:/var/www/html/data
+    depends_on:
+      - redis
+    entrypoint: /cron.sh
+
+  nextcloud:
+    container_name: nextcloud
+    hostname: nextcloud
+    depends_on:
+      - nginx-proxy
+    image: dheaps/nextcloud-cron
+    environment:
+      - VIRTUAL_HOST=nextcloud
+      - VIRTUAL_PROTO=http
+    volumes:
+      - nextcloud:/var/www/html
+      - /var/nextcloud/config:/var/www/html/config
+      - /var/nextcloud/data:/var/www/html/data
+    restart: always
+
+volumes:
+  nextcloud:
