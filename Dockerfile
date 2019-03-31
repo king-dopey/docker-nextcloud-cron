@@ -1,2 +1,2 @@
-FROM nextcloud:14
+FROM nextcloud:15
 COPY cron.sh /
